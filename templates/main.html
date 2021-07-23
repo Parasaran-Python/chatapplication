@@ -45,11 +45,13 @@
                 var params = "Alias="+document.getElementById('Alias').value;
                 request.open("POST", "/addUser", true);
                 request.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
-                request.setRequestHeader("Content-length", params.length);
-                request.setRequestHeader("Connection", "close");
                 request.onreadystatechange = function () {
-                    if (request.readyState == 4 && request.status == 200) {
+                    var resp=JSON.parse(request.responseText);
+                    if (request.readyState == 4 && request.status == 200 && resp.status) {
                         window.location.reload();
+                    }
+                    else if (!resp.status) {
+                        alert(resp.reason);
                     }
                 };
                 request.send(params);
@@ -114,16 +116,81 @@
             }
         </style>
         <script>
-            function enter(event) {
-                if (event.keyCode == 13) {
-                    send_message();
-                }
-            }
-            function send_message() {
+            setInterval(function() {
+                var userReq=new XMLHttpRequest();
+                userReq.open('GET','/users',true);
+                userReq.onreadystatechange=function() {
+                    try {
+                        var us=JSON.parse(userReq.responseText).users;
+                        if (userReq.readyState == 4 && userReq.status == 200 && us.length>users.length) {
+                            for (let i=0;i<us.length;i++) {
+                                if (users.indexOf(us[i])==-1) {
+                                    users.push(us[i]);
+                                    var usersDiv=document.createElement('div');
+                                    usersDiv.classList.add('usersDiv');
+                                    var u=document.createElement('a');
+                                    u.innerHTML=us[i];
+                                    usersDiv.appendChild(u);
+                                    document.getElementById('Users').appendChild(usersDiv);
+                                }
+                            }
+                        } 
+                    }
+                    catch(err){}
+                };
+                userReq.send();
 
+                var httpresp=new XMLHttpRequest();
+                httpresp.open("POST", "/receive", true);
+                var params='timestamp='+ts;
+                httpresp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+                httpresp.onreadystatechange=function() {
+                    if (httpresp.readyState == 4 && httpresp.status == 200 ) {
+                        var resp=JSON.parse(httpresp.responseText);
+                        var msgbody=document.getElementById('messagesBody');
+                        for (let i=0;i<resp.length;i++) {
+                            if (resp[i].sender == 'YOU') {
+                                let msgdiv=document.createElement('div');
+                                msgdiv.classList.add('sentMessage');
+                                let msg=document.createElement('a');
+                                msg.innerHTML=resp[i].message;
+                                msgdiv.appendChild(msg);
+                                msgbody.appendChild(msgdiv);
+                            }
+                            else {
+                                let msgdiv=document.createElement('div');
+                                msgdiv.classList.add('recvdMessage');
+                                let msg=document.createElement('a');
+                                msg.innerHTML='<i><u>'+resp[i].sender+'</u></i><br>'+resp[i].message;
+                                msgdiv.appendChild(msg);
+                                msgbody.appendChild(msgdiv);
+                            }
+                            ts=Math.max(ts,resp[i].timestamp);
+                        }
+                    }
+                }
+                httpresp.send(params);
+            },1000);
+            function send_message() {
+                var sendMsg=new XMLHttpRequest();
+                sendMsg.open("POST", "/send", true);
+                var params="message="+document.getElementById('message').value;
+                sendMsg.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+                sendMsg.onreadystatechange=function() {
+                    if (sendMsg.readyState == 4 && sendMsg.status == 200 ) {
+                        document.getElementById('message').value='';
+                    }
+                }
+                sendMsg.send(params);
             }
         </script>
         <strong>Hello {{users[ip]}}</strong>
+        <div>
+            <strong><u>Users</u></strong>
+            <div id="Users">
+
+            </div>
+        </div>
         <div id="messagesBody">
             {% for i in messages %}
                 {% if i['ip'] == ip %}
@@ -136,9 +203,13 @@
                     </div>
                 {% endif %}
             {% endfor %}
+            <script>
+                var ts={{ m }};
+                var users=[];
+            </script>
         </div>
         <footer id="footer">
-            <textarea id="message" type="text"></textarea>&nbsp&nbsp<button onclick="send_message()" onkeydown="enter()" id="send">Send</button>
+            <textarea id="message" type="text"></textarea>&nbsp&nbsp<button onclick="send_message()" id="send">Send</button>
         </footer>
     {% endif %}
 </body>
