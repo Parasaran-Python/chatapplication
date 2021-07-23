@@ -2,32 +2,144 @@
 <html>
 
 <head></head>
-<title>FreeChat</title>
-
+<title>SMS Web</title>
+<style>
+    body {
+        background-color: khaki;
+    }
+</style>
 <body>
     {% if ip not in users %}
-    <script>
-        function addUser() {
-            var request = new XMLHttpRequest();
-            var params = "Alias="+document.getElementById('Alias').value;
-            request.open("POST", "/addUser", true);
-            request.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
-            request.setRequestHeader("Content-length", params.length);
-            request.setRequestHeader("Connection", "close");
-            request.onreadystatechange = function () {
-                if (request.readyState == 4 && request.status == 200) {
-                    window.location.reload();
-                }
-            };
-            request.send(params);
-        }
-    </script>
-    <div class="newReg">
-        <input type="text" id="Alias" />
-        <button onclick="addUser()">Add me!</button>
-    </div>
+        <style>
+            .newRegDiv {
+                position: relative;
+                display: block;
+                text-align: center;
+                margin-left: 40%;
+                margin-top: 15%;
+                background-image: repeating-linear-gradient(to bottom right,rgb(128, 51, 0),rgb(255, 0, 0));
+                border-radius: 10px;
+                width: 15%;
+                height: 120px;
+            }
+            .newReg input {
+                margin-top: 20px;
+                height: 20px;
+                border-radius: 7px;
+                background-image: linear-gradient(to right,white,grey);
+            }
+            .newReg button {
+                margin-top: 20px;
+                width: 70px;
+                height: 35px;
+                align-items: center;
+                border-radius: 10px;
+                background-image: repeating-linear-gradient(to right bottom,purple,blue);
+                color: white;
+                border: thin;
+            }
+        </style>
+        <script>
+            function addUser() {
+                var request = new XMLHttpRequest();
+                var params = "Alias="+document.getElementById('Alias').value;
+                request.open("POST", "/addUser", true);
+                request.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+                request.setRequestHeader("Content-length", params.length);
+                request.setRequestHeader("Connection", "close");
+                request.onreadystatechange = function () {
+                    if (request.readyState == 4 && request.status == 200) {
+                        window.location.reload();
+                    }
+                };
+                request.send(params);
+            }
+        </script>
+        <div class="newRegDiv">
+            <div class="newReg">
+                <input type="text" id="Alias" />
+            </div>
+            <div class="newReg">
+                <button onclick="addUser()">Add me!</button>
+            </div>
+        </div>
+        
     {% else %}
-    <a>Hello {{users[ip]}}</a>
+        <style>
+            #send {
+                width: 70px;
+                height: 30px;
+                align-items: center;
+                border-radius: 10px;
+                background-image: repeating-linear-gradient(to right bottom,purple,blue);
+                color: white;
+                border: thin;
+                margin-bottom: 20px;
+            }
+            #messagesBody {
+                width: 800px;
+                height:500px;
+                background-color: lavender;
+                margin-top: 20px;
+                margin-left: auto;
+                margin-right: auto;
+                border-radius: 10px;
+                overflow: scroll;
+            }
+            #footer{
+                text-align: center;
+                align-content: center;
+            }
+            #message {
+                width: 500px;
+                height: 100px;
+                margin-top: 40px;
+                border-radius: 10px;
+            }
+            .sentMessage {
+                text-align: right;
+                margin-bottom: 30px;
+                margin-right: 20px;
+            }
+            .recvdMessage {
+                text-align: left;
+                margin-bottom: 30px;
+                margin-left: 20px;
+            }
+            .sentMessage a {
+                background-color: greenyellow;
+            }
+            .recvdMessage a {
+                background-color: lightblue;
+            }
+        </style>
+        <script>
+            function enter(event) {
+                if (event.keyCode == 13) {
+                    send_message();
+                }
+            }
+            function send_message() {
+
+            }
+        </script>
+        <strong>Hello {{users[ip]}}</strong>
+        <div id="messagesBody">
+            {% for i in messages %}
+                {% if i['ip'] == ip %}
+                    <div class="sentMessage">
+                        <a>{{i['message']}}</a>
+                    </div>
+                {% else %}
+                    <div class="recvdMessage">
+                        <a><i><u>{{users[i['ip']]}}</u></i><br>{{i['message']}}</a>
+                    </div>
+                {% endif %}
+            {% endfor %}
+        </div>
+        <footer id="footer">
+            <textarea id="message" type="text"></textarea>&nbsp&nbsp<button onclick="send_message()" onkeydown="enter()" id="send">Send</button>
+        </footer>
     {% endif %}
 </body>
 

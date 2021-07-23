@@ -1,10 +1,13 @@
 from flask import Flask, render_template, request
 from json import dumps
+from time import time
 
 app = Flask(__name__)
 
+# users={'127.0.0.1':'Parasaran','1.1.1.1':'Test'}
+# messages=[{'ip':'127.0.0.1','message':'Hello!'},{'ip':'1.1.1.1','message':'Hello from test!'}]
 users={}
-messages={}
+messages=[]
 
 @app.route('/')
 def homePage():
@@ -17,6 +20,15 @@ def addNewUser():
     else:
         users[request.remote_addr]=request.form['Alias']
         return dumps({'status':True,'reason':'User Added'})
+
+@app.route('/send', methods=['POST'])
+def send():
+    messages.append({'ip':request.remote_addr,'message':request.form['message'],'timestamp':time()})
+    return dumps({'status':'sent'})
+
+@app.route('/receive')
+def receive():
+    pass
 
 
 app.run(debug=True, port=3456)
