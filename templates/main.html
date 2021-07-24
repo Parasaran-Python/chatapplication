@@ -172,16 +172,18 @@
                 httpresp.send(params);
             },1000);
             function send_message() {
-                var sendMsg=new XMLHttpRequest();
-                sendMsg.open("POST", "/send", true);
-                var params="message="+document.getElementById('message').value;
-                sendMsg.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
-                sendMsg.onreadystatechange=function() {
-                    if (sendMsg.readyState == 4 && sendMsg.status == 200 ) {
-                        document.getElementById('message').value='';
+                if (document.getElementById('message').value.trim().length > 0) {
+                    var sendMsg=new XMLHttpRequest();
+                    sendMsg.open("POST", "/send", true);
+                    var params="message="+document.getElementById('message').value;
+                    sendMsg.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+                    sendMsg.onreadystatechange=function() {
+                        if (sendMsg.readyState == 4 && sendMsg.status == 200 ) {
+                            document.getElementById('message').value='';
+                        }
                     }
+                    sendMsg.send(params);
                 }
-                sendMsg.send(params);
             }
         </script>
         <strong>Hello {{users[ip]}}</strong>

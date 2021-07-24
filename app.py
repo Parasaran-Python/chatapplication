@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, Response
 from json import dumps
 from time import time
 
@@ -31,27 +31,33 @@ def addNewUser():
 
 @app.route('/send', methods=['POST'])
 def send():
-    messages.append({'ip': request.remote_addr,
-                    'message': request.form['message'], 'timestamp': time()})
-    return dumps({'status': 'sent'})
+    if request.remote_addr in users:
+        messages.append({'ip': request.remote_addr,
+                        'message': request.form['message'], 'timestamp': time()})
+        return dumps({'status': 'sent'})
+    return Response(status=403)
 
 
 @app.route('/receive', methods=['POST'])
 def receive():
-    messages_to_return = []
-    for i in messages:
-        if float(request.form['timestamp']) < i['timestamp']:
-            if request.remote_addr == i['ip']:
-                messages_to_return.append(
-                    {'sender': 'YOU', 'message': i['message'], 'timestamp': i['timestamp']})
-            else:
-                messages_to_return.append(
-                    {'sender': users[i['ip']], 'message': i['message'], 'timestamp': i['timestamp']})
-    return dumps(messages_to_return)
+    if request.remote_addr in users:
+        messages_to_return = []
+        for i in messages:
+            if float(request.form['timestamp']) < i['timestamp']:
+                if request.remote_addr == i['ip']:
+                    messages_to_return.append(
+                        {'sender': 'YOU', 'message': i['message'], 'timestamp': i['timestamp']})
+                else:
+                    messages_to_return.append(
+                        {'sender': users[i['ip']], 'message': i['message'], 'timestamp': i['timestamp']})
+        return dumps(messages_to_return)
+    return Response(status=403)
 
 @app.route('/users', methods=['GET'])
 def get_users():
-    return dumps({'users':list(users.values())})
+    if request.remote_addr in users:
+        return dumps({'users':list(users.values())})
+    return Response(status=403)
 
 
 app.run(host='192.168.1.8', debug=True, port=3456)
